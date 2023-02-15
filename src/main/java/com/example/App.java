@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,16 +43,20 @@ public class App {
         pwd = args[1];
         price = args[2];
 
-        // https://www.tesla.com/inventory/api/v1/inventory-results?query={"query":{"model":"my","condition":"new","options":{"TRIM":["LRAWD"]},"arrangeby":"Relevance","order":"desc","market":"US","language":"en","super_region":"north
-        // america","lng":-93.2860769,"lat":45.31968819999999,"zip":"55011","range":200,"region":"MN"},"offset":0,"count":50,"outsideOffset":0,"outsideSearch":false}
+        // https://www.tesla.com/inventory/api/v1/inventory-results?query={"query":{"model":"my","condition":"new","options":{"TRIM":["LRAWD"]},"arrangeby":"Relevance","order":"desc","market":"US","language":"en","super_region":"north america","lng":-93.2860769,"lat":45.31968819999999,"zip":"55011","range":200,"region":"MN"},"offset":0,"count":50,"outsideOffset":0,"outsideSearch":false}
 
-        // query=%7B%22query%22%3A%7B%22model%22%3A%22my%22%2C%22condition%22%3A%22new%22%2C%22options%22%3A%7B%22TRIM%22%3A%5B%22LRAWD%22%5D%7D%2C%22arrangeby%22%3A%22Relevance%22%2C%22order%22%3A%22desc%22%2C%22market%22%3A%22US%22%2C%22language%22%3A%22en%22%2C%22super_region%22%3A%22north%20america%22%2C%22lng%22%3A-93.2860769%2C%22lat%22%3A45.31968819999999%2C%22zip%22%3A%2255011%22%2C%22range%22%3A200%2C%22region%22%3A%22MN%22%7D%2C%22offset%22%3A0%2C%22count%22%3A50%2C%22outsideOffset%22%3A0%2C%22outsideSearch%22%3Afalse%7D
+        // model = m3 (model 3)
+        // TRIM = PAWD (m3 performance awd)
 
-        URL url = new URL(
-                "https://www.tesla.com/inventory/api/v1/inventory-results?query=%7B%22query%22%3A%7B%22model%22%3A%22my%22%2C%22condition%22%3A%22new%22%2C%22options%22%3A%7B%22TRIM%22%3A%5B%22LRAWD%22%5D%7D%2C%22arrangeby%22%3A%22Relevance%22%2C%22order%22%3A%22desc%22%2C%22market%22%3A%22US%22%2C%22language%22%3A%22en%22%2C%22super_region%22%3A%22north%20america%22%2C%22lng%22%3A-93.2860769%2C%22lat%22%3A45.31968819999999%2C%22zip%22%3A%2255011%22%2C%22range%22%3A200%2C%22region%22%3A%22MN%22%7D%2C%22offset%22%3A0%2C%22count%22%3A50%2C%22outsideOffset%22%3A0%2C%22outsideSearch%22%3Afalse%7D");
+        // model = my (model y)
+        // TRIM = LRAWD (y long range awd)
 
-        // URL url = new URL(
-        // "https://www.tesla.com/inventory/api/v1/inventory-results?query=%7B%22query%22%3A%7B%22model%22%3A%22m3%22%2C%22condition%22%3A%22new%22%2C%22options%22%3A%7B%7D%2C%22arrangeby%22%3A%22Price%22%2C%22order%22%3A%22asc%22%2C%22market%22%3A%22US%22%2C%22language%22%3A%22en%22%2C%22super_region%22%3A%22north%20america%22%2C%22lng%22%3A-93.2860769%2C%22lat%22%3A45.31968819999999%2C%22zip%22%3A%2255011%22%2C%22range%22%3A200%2C%22region%22%3A%22MN%22%7D%2C%22offset%22%3A0%2C%22count%22%3A50%2C%22outsideOffset%22%3A0%2C%22outsideSearch%22%3Afalse%7D");
+        // model = my (model y)
+        // TRIM = MYAWD (y std range awd)
+
+        String encodedURL = URLEncoder.encode("{\"query\":{\"model\":\"my\",\"condition\":\"new\",\"options\":{\"TRIM\":[\"MYAWD\"]},\"arrangeby\":\"Relevance\",\"order\":\"desc\",\"market\":\"US\",\"language\":\"en\",\"super_region\":\"north america\",\"lng\":-93.2860769,\"lat\":45.31968819999999,\"zip\":\"55011\",\"range\":200,\"region\":\"MN\"},\"offset\":0,\"count\":50,\"outsideOffset\":0,\"outsideSearch\":false}", "UTF-8");
+
+        URL url = new URL("https://www.tesla.com/inventory/api/v1/inventory-results?query=" + encodedURL);
 
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
 
@@ -64,7 +69,7 @@ public class App {
             strBuf.append(rd.readLine());
         }
 
-        // System.out.println("text: " + strBuf.toString());
+        System.out.println("text: " + strBuf.toString());
 
         Map<String, Object> myMap = new HashMap<String, Object>();
 
@@ -77,31 +82,35 @@ public class App {
         for (String string : keys) {
             System.out.println("key: " + string);
             if ("results".equalsIgnoreCase(string)) {
-                list = (ArrayList) myMap.get(string);
+                Object obj = myMap.get(string);
+                if(obj instanceof ArrayList) {
+                    list = (ArrayList) obj;
+                }
             } else {
                 System.out.println("val: " + myMap.get(string));
             }
         }
-        System.out.println("list count: " + list.size());
         int num = 0;
-        for (int i = 0; i < list.size(); i++) {
-            // System.out.println("item: " + object.toString());
-            System.out.println("item: " + i);
-            LinkedHashMap obj = (LinkedHashMap) list.get(i);
-            Set set = obj.keySet();
-            for (Object object : set) {
-                // System.out.println(" key: " + object.toString() + ", val: " +
-                // obj.get(object));
-                if ("PurchasePrice".equalsIgnoreCase(object.toString())) {
-                    int pp = (int) obj.get(object);
-                    System.out.println("    key: " + object.toString() + ", val: " + pp);
-                    if (pp < Integer.parseInt(price)) {
-                        num++;
+        if(list != null) {
+            System.out.println("list count: " + list.size());
+            for (int i = 0; i < list.size(); i++) {
+                // System.out.println("item: " + object.toString());
+                System.out.println("item: " + i);
+                LinkedHashMap obj = (LinkedHashMap) list.get(i);
+                Set set = obj.keySet();
+                for (Object object : set) {
+                    // System.out.println(" key: " + object.toString() + ", val: " +
+                    // obj.get(object));
+                    if ("PurchasePrice".equalsIgnoreCase(object.toString())) {
+                        int pp = (int) obj.get(object);
+                        System.out.println("    key: " + object.toString() + ", val: " + pp);
+                        if (pp < Integer.parseInt(price)) {
+                            num++;
+                        }
                     }
+                    // System.out.println("val: " + obj.get("Price"));
                 }
-                // System.out.println("val: " + obj.get("Price"));
             }
-
         }
         if (num > 0) {
             emailMe(num);
